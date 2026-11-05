@@ -1,6 +1,6 @@
 {
-  "name": "Fluxo da Casa",
-  "short_name": "Fluxo",
+  "name": "soma",
+  "short_name": "soma",
   "description": "Controle financeiro da família: despesas, cartões, contas fixas e alertas.",
   "lang": "pt-BR",
   "start_url": "./",
