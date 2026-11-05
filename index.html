@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fluxo da Casa</title>
+<title>soma</title>
 <meta name="theme-color" content="#1B2B4B">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Fluxo da Casa">
+<meta name="apple-mobile-web-app-title" content="soma">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
@@ -59,7 +59,7 @@ button{cursor:pointer}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
 header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
 .brand{font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:-.01em}
-.brand{display:flex;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-size:22px;letter-spacing:-.02em}
 .logo{width:34px;height:34px;flex:none}
 .brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
 .stepper{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
@@ -317,7 +317,7 @@ nav.tabs button.add span.plus{width:52px;height:52px;border-radius:16px;backgrou
 <body>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#1B2B4B"/><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>Fluxo da Casa<small id="who">Carregando…</small></div></div>
+  <div class="brand"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#1B2B4B"/><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>soma<small id="who">Carregando…</small></div></div>
   <div class="stepper" id="stepper"><button id="prev" aria-label="Anterior">‹</button><span id="period"></span><button id="next" aria-label="Próximo">›</button></div>
 </div></header>
 
@@ -371,7 +371,7 @@ const ICO={veiculos:'<path d="M4 16v-4l2-5h12l2 5v4z"/><path d="M4 12h16"/><circ
  receitas:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
  card:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>'};
 const CORES_P=['#2F6BD8','#D2507F','#24945F','#D4931C','#7656D0','#1597A8'];
-const PALS=[['fluxo','Fluxo','#1B2B4B','#4CD39A'],['azul','Azul','#1E4FC2','#E2862C'],['verde','Verde','#0D6B59','#B8722A'],['roxo','Roxo','#6A3FD3','#E0507E'],['coral','Coral','#C4462B','#2D6EA6']];
+const PALS=[['fluxo','Padrão','#1B2B4B','#4CD39A'],['azul','Azul','#1E4FC2','#E2862C'],['verde','Verde','#0D6B59','#B8722A'],['roxo','Roxo','#6A3FD3','#E0507E'],['coral','Coral','#C4462B','#2D6EA6']];
 const icone=c=>`<span class="ic" style="--c:${COR[c]||'var(--muted)'}"><svg viewBox="0 0 24 24">${ICO[c]||ICO.outros}</svg></span>`;
 const catById = id => id==='receitas' ? RECEITAS : CATS.find(c=>c.id===id);
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -953,7 +953,7 @@ function mostrarLock(){
   if(lockAberto)return; lockAberto=true; pinBuf='';
   const r=document.getElementById('lockRoot');
   r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Desbloquear o app">
-    <div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Fluxo da Casa</h2><p id="lkMsg">Digite seu PIN</p><div class="lk-dots" id="lkDots">${'<i></i>'.repeat(4)}</div></div>
+    <div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>soma</h2><p id="lkMsg">Digite seu PIN</p><div class="lk-dots" id="lkDots">${'<i></i>'.repeat(4)}</div></div>
     <div class="lk-reset" id="lkReset" hidden><p>Para remover o PIN, digite <b>REMOVER</b> abaixo. Você continua conectado pela sua conta.</p><input type="text" id="lkConf" autocomplete="off" aria-label="Confirmação"><div class="btnrow"><button class="btn" id="lkCancel">Voltar</button><button class="btn danger" id="lkOk">Remover PIN</button></div></div>
     <div class="lk-pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="esq" class="lk-sm">Esqueci</button><button data-k="0">0</button><button data-k="del" class="lk-sm" aria-label="Apagar">⌫</button></div></div>`;
   r.querySelector('.lk-pad').onclick=e=>{const k=e.target.closest('[data-k]')?.dataset.k;if(k)lockTecla(k)};
@@ -1088,12 +1088,12 @@ function assinar(nome){
 /* ---------- Firebase ---------- */
 // Cole aqui a configuração do seu projeto (Firebase › Configurações do projeto › Seus apps › Web)
 const FIREBASE_CONFIG = {
-  apiKey: "COLE_AQUI",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyA_dDDE8vOvChtQQonZJsDNS6dtpagxAdI",
+  authDomain: "soma-90ee5.firebaseapp.com",
+  projectId: "soma-90ee5",
+  storageBucket: "soma-90ee5.firebasestorage.app",
+  messagingSenderId: "334063359263",
+  appId: "1:334063359263:web:cc154aca6af05820758c2a"
 };
 const configurado=()=>!!FIREBASE_CONFIG.apiKey&&!FIREBASE_CONFIG.apiKey.startsWith('COLE');
 
@@ -1133,7 +1133,7 @@ function mostrarAuth(modo,info){
       <button class="btn primary block" data-au="tentar">Tentar de novo</button>
       <button class="lnk" data-au="sair">Sair</button>`
   }[modo];
-  r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Acesso"><div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Fluxo da Casa</h2><p>Finanças da família</p></div>
+  r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Acesso"><div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>soma</h2><p>Finanças da família</p></div>
     <form class="auth-box" id="auForm" novalidate>${corpo}</form><span></span></div>`;
   const f=r.querySelector('#auForm'), msg=t=>{const m=r.querySelector('#au_msg');if(m){m.textContent=t;m.style.color='var(--bad)'}};
   if(info) setTimeout(()=>msg(info),0);

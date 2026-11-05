@@ -1,11 +1,11 @@
-# Fluxo da Casa — como colocar no ar
+# soma — como colocar no ar
 
 São 4 etapas: criar o Firebase, colar a configuração, publicar no GitHub Pages e fazer o primeiro acesso. Leva uns 20 minutos.
 
 ## 1. Criar o projeto no Firebase (gratuito)
 
 1. Entre em https://console.firebase.google.com com sua conta Google.
-2. **Adicionar projeto** → nome `fluxo-da-casa` → pode desativar o Google Analytics → **Criar projeto**.
+2. **Adicionar projeto** → nome `soma-familia` → pode desativar o Google Analytics → **Criar projeto**.
    Use um projeto novo, separado do Urtigão: são dados financeiros da família.
 
 **Login por e-mail e senha**
@@ -19,20 +19,20 @@ São 4 etapas: criar o Firebase, colar a configuração, publicar no GitHub Page
 
 ## 2. Colar a configuração no app
 
-7. Ícone de engrenagem › **Configurações do projeto** → em **Seus apps**, clique no ícone **</>** (Web) → apelido `Fluxo da Casa` → **Registrar app** (não precisa marcar Hosting).
+7. Ícone de engrenagem › **Configurações do projeto** → em **Seus apps**, clique no ícone **</>** (Web) → apelido `soma` → **Registrar app** (não precisa marcar Hosting).
 8. Aparece um bloco `const firebaseConfig = { apiKey: ..., authDomain: ..., ... }`.
-9. Abra o `index.html` e procure por `COLE_AQUI`. Troque o bloco `FIREBASE_CONFIG` pelos valores que apareceram (apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId).
+9. (Já feito: a configuração do projeto soma-90ee5 está no index.html.) Se um dia trocar de projeto, abra o `index.html` e procure por `FIREBASE_CONFIG`. Troque o bloco `FIREBASE_CONFIG` pelos valores que apareceram (apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId).
    Se preferir, me mande esse bloco que eu devolvo o `index.html` pronto.
 
 Essas chaves não são senha: o Firebase foi feito para elas ficarem no código. Quem protege os dados são as regras do passo 6.
 
 ## 3. Publicar no GitHub Pages
 
-10. Em https://github.com/new crie o repositório `fluxo-da-casa` (público).
+10. Em https://github.com/new crie o repositório `soma` (público).
 11. **Add file › Upload files** → envie: `index.html`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` → **Commit changes**.
     (Os arquivos `firestore.rules` e `SETUP.md` não precisam ir para o GitHub.)
 12. **Settings › Pages** → Source: **Deploy from a branch** → Branch `main`, pasta `/ (root)` → **Save**.
-13. Em 1 ou 2 minutos o app fica em: **https://luizmartinhagom-cell.github.io/fluxo-da-casa/**
+13. Em 1 ou 2 minutos o app fica em: **https://luizmartinhagom-cell.github.io/soma/**
 
 ## 4. Primeiro acesso
 
@@ -46,7 +46,7 @@ Essas chaves não são senha: o Firebase foi feito para elas ficarem no código.
 - **iPhone (Safari):** abra o link → botão Compartilhar → **Adicionar à Tela de Início**.
 - **Android (Chrome):** abra o link → menu ⋮ → **Instalar app** (ou Adicionar à tela inicial).
 
-O app abre em tela cheia, com o ícone do Fluxo da Casa. Funciona sem internet: mostra os dados salvos no aparelho e envia o que for lançado quando a conexão voltar.
+O app abre em tela cheia, com o ícone do soma. Funciona sem internet: mostra os dados salvos no aparelho e envia o que for lançado quando a conexão voltar.
 
 ## Atualizações
 

@@ -1,6 +1,6 @@
-// Fluxo da Casa — guarda os arquivos do app para abrir rápido e sem internet.
+// soma — guarda os arquivos do app para abrir rápido e sem internet.
 // Os dados ficam no Firebase (com cópia offline própria), não aqui.
-const CACHE = 'fluxo-v1';
+const CACHE = 'soma-v1';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
