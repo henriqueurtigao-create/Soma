@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>soma</title>
+<title>Soma</title>
 <meta name="theme-color" content="#1B2B4B">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="soma">
+<meta name="apple-mobile-web-app-title" content="Soma">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
@@ -317,7 +317,7 @@ nav.tabs button.add span.plus{width:52px;height:52px;border-radius:16px;backgrou
 <body>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#1B2B4B"/><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>soma<small id="who">Carregando…</small></div></div>
+  <div class="brand"><svg class="logo" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#1B2B4B"/><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>Soma<small id="who">Carregando…</small></div></div>
   <div class="stepper" id="stepper"><button id="prev" aria-label="Anterior">‹</button><span id="period"></span><button id="next" aria-label="Próximo">›</button></div>
 </div></header>
 
@@ -953,7 +953,7 @@ function mostrarLock(){
   if(lockAberto)return; lockAberto=true; pinBuf='';
   const r=document.getElementById('lockRoot');
   r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Desbloquear o app">
-    <div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>soma</h2><p id="lkMsg">Digite seu PIN</p><div class="lk-dots" id="lkDots">${'<i></i>'.repeat(4)}</div></div>
+    <div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Soma</h2><p id="lkMsg">Digite seu PIN</p><div class="lk-dots" id="lkDots">${'<i></i>'.repeat(4)}</div></div>
     <div class="lk-reset" id="lkReset" hidden><p>Para remover o PIN, digite <b>REMOVER</b> abaixo. Você continua conectado pela sua conta.</p><input type="text" id="lkConf" autocomplete="off" aria-label="Confirmação"><div class="btnrow"><button class="btn" id="lkCancel">Voltar</button><button class="btn danger" id="lkOk">Remover PIN</button></div></div>
     <div class="lk-pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="esq" class="lk-sm">Esqueci</button><button data-k="0">0</button><button data-k="del" class="lk-sm" aria-label="Apagar">⌫</button></div></div>`;
   r.querySelector('.lk-pad').onclick=e=>{const k=e.target.closest('[data-k]')?.dataset.k;if(k)lockTecla(k)};
@@ -1133,7 +1133,7 @@ function mostrarAuth(modo,info){
       <button class="btn primary block" data-au="tentar">Tentar de novo</button>
       <button class="lnk" data-au="sair">Sair</button>`
   }[modo];
-  r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Acesso"><div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>soma</h2><p>Finanças da família</p></div>
+  r.innerHTML=`<div class="lock" role="dialog" aria-modal="true" aria-label="Acesso"><div class="lk-top"><div class="lk-logo"><svg viewBox="0 0 100 100"><path d="M37 74 V28 M26 40 L37 27 L48 40" fill="none" stroke="#4CD39A" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M63 26 V72 M52 60 L63 73 L74 60" fill="none" stroke="#FF7A6B" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Soma</h2><p>Finanças da família</p></div>
     <form class="auth-box" id="auForm" novalidate>${corpo}</form><span></span></div>`;
   const f=r.querySelector('#auForm'), msg=t=>{const m=r.querySelector('#au_msg');if(m){m.textContent=t;m.style.color='var(--bad)'}};
   if(info) setTimeout(()=>msg(info),0);

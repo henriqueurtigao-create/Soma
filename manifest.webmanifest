@@ -1,6 +1,6 @@
 {
-  "name": "soma",
-  "short_name": "soma",
+  "name": "Soma",
+  "short_name": "Soma",
   "description": "Controle financeiro da família: despesas, cartões, contas fixas e alertas.",
   "lang": "pt-BR",
   "start_url": "./",
