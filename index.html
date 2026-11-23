@@ -400,7 +400,9 @@ const S = {
   mes: hojeISO().slice(0,7),
   f:{ano:+hojeISO().slice(0,4), tipo:'despesa', cat:'', sub:'', item:'', autor:'', conta:''},
 };
-let db=null, fs=null, auth=null, downloads=true, ACESSO=null, S_email='', subs=[];
+let db=null, fs=null, auth=null, downloads=true, ACESSO=null, S_email='', subs=[], FAM='';
+/* Cada família tem seu espaço: familias/{id}/lanc, contas, itens, pessoas, config */
+const px=p=>/^(lanc|contas|itens|pessoas|config)(\/|$)/.test(p)&&FAM?'familias/'+FAM+'/'+p:p;
 
 /* ---------- Nomes das pessoas ---------- */
 function nomeP(p){return p?.nome || (p?.email||'').split('@')[0] || ''}
@@ -697,12 +699,12 @@ function vAjustes(){
   h+=`</section>`;
 
   const membros=ACESSO?.emails||[], sv=ACESSO?.somenteVer||[];
-  h+=`<section class="card"><h2>Quem acompanha <span class="aux">${membros.length} pessoa${membros.length!==1?'s':''}</span></h2><div class="pessoas">${membros.map(em=>{
+  h+=`<section class="card"><h2>${S.familiaNome?esc(S.familiaNome)+' · ':''}Quem acompanha <span class="aux">${membros.length} pessoa${membros.length!==1?'s':''}</span></h2><div class="pessoas">${membros.map(em=>{
       const p=S.pessoas.find(x=>(x.email||'').toLowerCase()===em)||{}, ve=sv.includes(em), eu=em===S_email, adm=!!p.id&&p.id===ACESSO.dono;
       return `<div><span class="av" style="--c:${p.cor||CORES_P[0]}">${esc((nomeP(p)||mostrarId(em))[0].toUpperCase())}</span>
       <span style="min-width:0"><b>${esc(nomeP(p)||mostrarId(em).split('@')[0])}${eu?' (você)':''}</b><small>${esc(mostrarId(em))} · ${adm?'administrador':ve?'só acompanha':p.id?'lança e acompanha':'ainda não entrou'}</small></span>
       ${S.isOwner&&!eu?`<span class="btnrow" style="justify-content:flex-end"><select id="papel_${encodeURIComponent(em)}" aria-label="Permissão"><option value="lanca" ${!ve?'selected':''}>Lança</option><option value="ve" ${ve?'selected':''}>Só vê</option></select><button class="btn small danger" data-act="remover" data-em="${esc(em)}">Remover</button></span>`:''}</div>`}).join('')}</div>
-    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="text" id="novo_email" placeholder="usuário (ex.: ana)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Depois de liberar, mande o link do app. A pessoa toca em "Criar conta" com esse usuário e escolhe a própria senha.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
+    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="text" id="novo_email" placeholder="usuário (ex.: ana)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Para quem vai dividir estas finanças com você. Mande o link do app: a pessoa toca em "Criar conta" com esse usuário e escolhe a própria senha.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
 
   h+=`<section class="card"><h2>Cores do app <span class="aux">vale só para você</span></h2><div class="pals">${PALS.map(([k,n,c1,c2])=>`<button class="pal ${pal===k?'on':''}" data-act="setPal" data-pal="${k}"><span class="pal-sw" style="background:linear-gradient(135deg,${c1} 50%,${c2} 50%)"></span>${n}</button>`).join('')}</div></section>`;
 
@@ -915,18 +917,19 @@ async function mudarPapel(emc,papel){
   if(!S.isOwner)return;
   const em=decodeURIComponent(emc), sv=new Set(ACESSO.somenteVer||[]);
   papel==='ve'?sv.add(em):sv.delete(em);
-  try{await db.doc('config/acesso').update({somenteVer:[...sv]});toast(papel==='ve'?'Agora só acompanha':'Agora pode lançar')}catch(e){erroEscrita(e)}
+  try{await db.doc('familias/'+FAM).update({somenteVer:[...sv]});toast(papel==='ve'?'Agora só acompanha':'Agora pode lançar')}catch(e){erroEscrita(e)}
 }
 async function liberarAcesso(){
   const bruto=(document.getElementById('novo_email')?.value||'').trim(), em=paraEmail(bruto);
   if(!em||(ehUsuario(em)?mostrarId(em).length<3:!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))){toast('Digite um usuário com pelo menos 3 letras.');return}
   if((ACESSO.emails||[]).includes(em)){toast('Esse usuário já tem acesso.');return}
-  try{await db.doc('config/acesso').update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+mostrarId(em))}catch(e){erroEscrita(e)}
+  try{await fs.doc('usuarios/'+em).set({familia:FAM,em:Date.now()})}catch(e){toast('Esse usuário já usa o Soma em outra família.');return}
+  try{await db.doc('familias/'+FAM).update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+mostrarId(em))}catch(e){erroEscrita(e)}
 }
 async function removerAcesso(b){
   const em=b.dataset.em;
   if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='Confirmar';return}
-  try{await db.doc('config/acesso').update({emails:(ACESSO.emails||[]).filter(x=>x!==em),somenteVer:(ACESSO.somenteVer||[]).filter(x=>x!==em)});toast('Acesso removido')}catch(e){erroEscrita(e)}
+  try{await db.doc('familias/'+FAM).update({emails:(ACESSO.emails||[]).filter(x=>x!==em),somenteVer:(ACESSO.somenteVer||[]).filter(x=>x!==em)});fs.doc('usuarios/'+em).delete().catch(()=>{});toast('Acesso removido')}catch(e){erroEscrita(e)}
 }
 async function salvarPrefs(patch){
   const o={...(S.prefs||{}),...patch};
@@ -1128,7 +1131,13 @@ function mostrarAuth(modo,info){
       <button class="btn primary block" data-au="confirmei">Já confirmei</button>
       <button class="btn block" data-au="reenviar">Reenviar e-mail</button>
       <button class="lnk" data-au="sair">Sair</button>`,
-    negado:`<h3>Acesso ainda não liberado</h3><p>O usuário <b>${esc(mostrarId(auth?.currentUser?.email))}</b> não está na lista. Peça ao administrador para liberar em Ajustes › Quem acompanha e toque em "Tentar de novo".</p>
+    familia:`<h3>Bem-vindo ao Soma</h3><p>Dê um nome para o espaço das suas finanças. Só você e quem você liberar em Ajustes › Quem acompanha vão ver esses dados.</p><p>Se alguém vai te convidar para a família dele, peça para liberar o usuário <b>${esc(mostrarId(auth?.currentUser?.email))}</b> e toque em "Já fui convidado".</p>
+      <label class="field"><span>Nome da família</span><input type="text" id="au_fam" maxlength="40" placeholder="ex.: Família Martinhago"></label>
+      <p id="au_msg" role="alert"></p>
+      <button class="btn primary block" data-au="criarfam">Criar e entrar</button>
+      <button class="btn block" data-au="tentar">Já fui convidado</button>
+      <button class="lnk" data-au="sair">Sair</button>`,
+    negado:`<h3>Acesso ainda não liberado</h3><p>O usuário <b>${esc(mostrarId(auth?.currentUser?.email))}</b> ainda não tem acesso. Se você vai usar o Soma com sua família, peça a liberação ao administrador do Soma. Se vai acompanhar a família de alguém, peça para essa pessoa liberar você em Ajustes › Quem acompanha. Depois toque em "Tentar de novo".</p>
       <p id="au_msg" role="alert"></p>
       <button class="btn primary block" data-au="tentar">Tentar de novo</button>
       <button class="lnk" data-au="sair">Sair</button>`
@@ -1146,6 +1155,7 @@ function mostrarAuth(modo,info){
       if(k==='irlogin') mostrarAuth('login');
       if(k==='sair') sair();
       if(k==='tentar') entrar(auth.currentUser);
+      if(k==='criarfam'){b.disabled=true;await criarFamilia(v('au_fam'))}
       if(k==='entrar'){if(!v('au_email')){msg('Digite seu usuário.');return}b.disabled=true;await auth.signInWithEmailAndPassword(paraEmail(v('au_email')),f.querySelector('#au_senha').value)}
       if(k==='esqueci'){const e1=paraEmail(v('au_email'));if(!e1){msg('Digite seu usuário acima e toque de novo.');return}if(ehUsuario(e1)){msg('Peça ao administrador para zerar sua senha. Depois é só criar a conta de novo com o mesmo usuário.');return}await auth.sendPasswordResetEmail(e1);toast('Enviamos um link para trocar a senha.')}
       if(k==='criar'){const s1=f.querySelector('#au_senha').value;if(s1!==f.querySelector('#au_senha2').value){msg('As duas senhas não são iguais.');return}
@@ -1185,27 +1195,34 @@ async function sair(){
   if(lockAberto)fecharLock();
   try{await auth.signOut()}catch(e){}
 }
+async function criarFamilia(nome){
+  const u=auth.currentUser; const ref=fs.collection('familias').doc();
+  await fs.doc('familias/'+ref.id).set({nome:nome||'Minha família',dono:u.uid,emails:[S_email],somenteVer:[],criado:Date.now()});
+  await fs.doc('usuarios/'+S_email).set({familia:ref.id,em:Date.now()});
+  await entrar(u);
+}
 async function entrar(u){
   subs.forEach(f=>{try{f()}catch(e){}}); subs=[];
   Object.assign(S,{lanc:[],contas:[],itens:[],pessoas:[],tetos:{},prefs:null,loaded:{},slow:false,err:null,uid:null,isOwner:false,canWrite:true});
   ACESSO=null; S_email='';
   if(!u){S.ready=true;fecharLock();render();mostrarAuth('login');return}
-  S_email=(u.email||'').toLowerCase();
-  let ac;
-  try{ac=await fs.doc('config/acesso').get()}catch(e){mostrarAuth('negado');return}
-  if(!ac.exists){
-    try{await gravar(fs.doc('config/acesso').set({dono:u.uid,emails:[S_email],somenteVer:[],criado:Date.now()}))}catch(e){mostrarAuth('negado');return}
-    toast('Você é o administrador do app.');
-  } else if(!(ac.data().emails||[]).includes(S_email)){mostrarAuth('negado');return}
+  S_email=(u.email||'').toLowerCase(); FAM='';
+  // em qual família esta pessoa está
+  let fid='';
+  try{const us=await fs.doc('usuarios/'+S_email).get();if(us.exists)fid=us.data().familia||''}catch(e){}
+  let fam=null;
+  if(fid){try{const f=await fs.doc('familias/'+fid).get();if(f.exists&&(f.data().emails||[]).includes(S_email))fam=f}catch(e){}}
+  if(!fam){mostrarAuth('familia');return}
+  FAM=fid;
   S.uid=u.uid; S.names[S.uid]=mostrarId(S_email).split('@')[0]; S.ready=true;
   fecharAuth();
-  subs.push(fs.doc('config/acesso').onSnapshot(sn=>{
-    ACESSO=sn.data()||{}; S.isOwner=ACESSO.dono===S.uid; S.canWrite=!(ACESSO.somenteVer||[]).includes(S_email);
+  subs.push(fs.doc('familias/'+FAM).onSnapshot(sn=>{
+    ACESSO=sn.data()||{}; S.familiaNome=ACESSO.nome||''; S.isOwner=ACESSO.dono===S.uid; S.canWrite=!(ACESSO.somenteVer||[]).includes(S_email);
     if(ACESSO.emails&&!ACESSO.emails.includes(S_email)){mostrarAuth('negado');return}
     render();
   },()=>{}));
   ['lanc','contas','itens','pessoas'].forEach(n=>subs.push(assinar(n)));
-  subs.push(fs.doc('config/tetos').onSnapshot(sn=>{S.tetos=sn.exists?{...sn.data()}:{};render()},()=>{}));
+  subs.push(fs.doc(px('config/tetos')).onSnapshot(sn=>{S.tetos=sn.exists?{...sn.data()}:{};render()},()=>{}));
   subs.push(fs.doc('prefs/'+S.uid).onSnapshot(sn=>{S.prefs=sn.exists?{...sn.data()}:{};aplicarPrefs();render()},()=>{S.prefs={}}));
   render();
 }
@@ -1217,7 +1234,7 @@ else{
   firebase.initializeApp(FIREBASE_CONFIG);
   auth=firebase.auth(); fs=firebase.firestore();
   try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
-  db={doc:p=>refDoc(fs.doc(p)),collection:p=>refCol(fs.collection(p))};
+  db={doc:p=>refDoc(fs.doc(px(p))),collection:p=>refCol(fs.collection(px(p)))};
   auth.onAuthStateChanged(u=>entrar(u));
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
