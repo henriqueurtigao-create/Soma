@@ -742,7 +742,7 @@ function vAjustes(){
       return `<div><span class="av" style="--c:${p.cor||CORES_P[0]}">${esc((nomeP(p)||mostrarId(em))[0].toUpperCase())}</span>
       <span style="min-width:0"><b>${esc(nomeP(p)||mostrarId(em).split('@')[0])}${eu?' (você)':''}</b><small>${esc(mostrarId(em))} · ${adm?'administrador':ve?'só acompanha':p.id?'lança e acompanha':'ainda não entrou'}</small></span>
       ${S.isOwner&&!eu?`<span class="btnrow" style="justify-content:flex-end"><select id="papel_${encodeURIComponent(em)}" aria-label="Permissão"><option value="lanca" ${!ve?'selected':''}>Lança</option><option value="ve" ${ve?'selected':''}>Só vê</option></select><button class="btn small danger" data-act="remover" data-em="${esc(em)}">Remover</button></span>`:''}</div>`}).join('')}</div>
-    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="text" id="novo_email" placeholder="usuário (ex.: ana)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Para quem vai dividir estas finanças com você. Mande o link do app: a pessoa toca em "Criar conta" com esse usuário e escolhe a própria senha.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
+    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="text" id="novo_email" placeholder="usuário (ex.: ana)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Para quem vai dividir estas finanças com você. A pessoa cria a conta no Soma primeiro; depois você libera o usuário dela aqui e ela fecha e abre o app.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
 
   if((S.familias||[]).length>1) h+=`<section class="card"><h2>Suas famílias</h2><p class="muted" style="margin:0 0 8px">Você participa de mais de um grupo de finanças.</p>${S.familias.map(f=>`<div class="acct"><span><span class="n">${esc(f.nome||'Família')}</span><br><span class="s">${f.dono===S.uid?'criada por você':'você foi convidado'}</span></span><span class="v">${f.id===FAM?'<span class="s">em uso</span>':`<button class="btn small" data-act="trocaFam" data-id="${f.id}">Usar</button>`}</span></div>`).join('')}</section>`;
 
@@ -1013,10 +1013,13 @@ async function mudarPapel(emc,papel){
   try{await db.doc('familias/'+FAM).update({somenteVer:[...sv]});toast(papel==='ve'?'Agora só acompanha':'Agora pode lançar')}catch(e){erroEscrita(e)}
 }
 async function liberarAcesso(){
-  const bruto=(document.getElementById('novo_email')?.value||'').trim(), em=paraEmail(bruto);
-  if(!em||(ehUsuario(em)?mostrarId(em).length<3:!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))){toast('Digite um usuário com pelo menos 3 letras.');return}
+  const bruto=(document.getElementById('novo_email')?.value||'').trim(), e0=paraEmail(bruto);
+  if(!e0||(ehUsuario(e0)?mostrarId(e0).length<3:!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e0))){toast('Digite um usuário com pelo menos 3 letras.');return}
+  if(ehUsuario(e0)){let ok=false;try{ok=(await fs.doc('logins/'+mostrarId(e0)).get()).exists}catch(e){}
+    if(!ok){toast('Esse usuário ainda não existe. Peça para a pessoa baixar o Soma e criar a conta primeiro.');return}}
+  const em=await emailDoUsuario(bruto);
   if((ACESSO.emails||[]).includes(em)){toast('Esse usuário já tem acesso.');return}
-  try{await db.doc('familias/'+FAM).update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+mostrarId(em))}catch(e){erroEscrita(e)}
+  try{await db.doc('familias/'+FAM).update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+(ehUsuario(e0)?mostrarId(e0):e0))}catch(e){erroEscrita(e)}
 }
 async function removerAcesso(b){
   const em=b.dataset.em;
@@ -1294,8 +1297,9 @@ function mostrarAuth(modo,info){
       <button class="btn primary block" data-au="entrar">Entrar</button>
       <button class="lnk" data-au="esqueci">Esqueci minha senha</button>
       <button class="lnk" data-au="ircriar">Primeiro acesso? Criar conta</button>`,
-    criar:`<h3>Criar conta</h3><p>Use o usuário que o administrador liberou para você.</p>
+    criar:`<h3>Criar conta</h3><p>Escolha um usuário e uma senha. O e-mail só é usado se você esquecer a senha.</p>
       <label class="field"><span>Usuário</span><input type="text" id="au_email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex.: luiz"></label>
+      <label class="field"><span>E-mail para recuperar a senha (recomendado)</span><input type="email" id="au_rec" autocomplete="email" inputmode="email" placeholder="seu@email.com"></label>
       <label class="field"><span>Senha (mínimo 6 caracteres)</span><input type="password" id="au_senha" autocomplete="new-password"></label>
       <label class="field"><span>Repita a senha</span><input type="password" id="au_senha2" autocomplete="new-password"></label>
       <p id="au_msg" role="alert"></p>
@@ -1331,10 +1335,22 @@ function mostrarAuth(modo,info){
       if(k==='sair') sair();
       if(k==='tentar') entrar(auth.currentUser);
       if(k==='criarfam'){b.disabled=true;await criarFamilia(v('au_fam'))}
-      if(k==='entrar'){if(!v('au_email')){msg('Digite seu usuário.');return}b.disabled=true;await auth.signInWithEmailAndPassword(paraEmail(v('au_email')),f.querySelector('#au_senha').value)}
-      if(k==='esqueci'){const e1=paraEmail(v('au_email'));if(!e1){msg('Digite seu usuário acima e toque de novo.');return}if(ehUsuario(e1)){msg('Peça ao administrador para zerar sua senha. Depois é só criar a conta de novo com o mesmo usuário.');return}await auth.sendPasswordResetEmail(e1);toast('Enviamos um link para trocar a senha.')}
+      if(k==='entrar'){if(!v('au_email')){msg('Digite seu usuário.');return}b.disabled=true;
+        const sen=f.querySelector('#au_senha').value, e1=await emailDoUsuario(v('au_email')), e0=paraEmail(v('au_email'));
+        try{await auth.signInWithEmailAndPassword(e1,sen)}catch(err){if(e1===e0)throw err;await auth.signInWithEmailAndPassword(e0,sen)}}
+      if(k==='esqueci'){if(!v('au_email')){msg('Digite seu usuário acima e toque de novo.');return}const e1=await emailDoUsuario(v('au_email'));
+        if(ehUsuario(e1)){msg('Essa conta foi criada sem e-mail de recuperação, então a senha não pode ser trocada pelo app. Fale com o suporte do Soma.');return}
+        await auth.sendPasswordResetEmail(e1);const m=f.querySelector('#au_msg');m.style.color='var(--good)';m.textContent='Enviamos um link para '+mascara(e1)+'. Veja também o spam.'}
       if(k==='criar'){const s1=f.querySelector('#au_senha').value;if(s1!==f.querySelector('#au_senha2').value){msg('As duas senhas não são iguais.');return}
-        const e1=paraEmail(v('au_email'));if(!e1){msg('Digite o usuário.');return}b.disabled=true;await auth.createUserWithEmailAndPassword(e1,s1)}
+        const bruto=v('au_email').toLowerCase(); if(!bruto){msg('Digite o usuário.');return}
+        if(bruto.includes('@')){b.disabled=true;await auth.createUserWithEmailAndPassword(bruto,s1);return}
+        const e0=paraEmail(bruto), id=mostrarId(e0); if(id.length<3){msg('O usuário precisa ter pelo menos 3 letras.');return}
+        const rec=v('au_rec').toLowerCase(); if(rec&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rec)){msg('Confira o e-mail de recuperação.');return}
+        b.disabled=true;
+        try{const ja=await fs.doc('logins/'+id).get();if(ja.exists){b.disabled=false;msg('Esse usuário já existe. Escolha outro.');return}}catch(e){}
+        const conta=rec||e0;
+        await auth.createUserWithEmailAndPassword(conta,s1);
+        try{await fs.doc('logins/'+id).set({email:conta,criado:Date.now()})}catch(e){}}
       if(k==='reenviar'){await auth.currentUser.sendEmailVerification();toast('E-mail reenviado.')}
       if(k==='confirmei'){await auth.currentUser.reload();if(!auth.currentUser.emailVerified){msg('Ainda não aparece como confirmado. Toque no link do e-mail e tente de novo.');return}
         await auth.currentUser.getIdToken(true);entrar(auth.currentUser)}
@@ -1364,6 +1380,13 @@ function formSenha(){
     };
   });
 }
+async function emailDoUsuario(x){
+  x=String(x||'').trim().toLowerCase(); if(x.includes('@')) return x;
+  const e0=paraEmail(x); if(!e0) return '';
+  try{const d=await fs.doc('logins/'+mostrarId(e0)).get(); if(d.exists&&d.data().email) return String(d.data().email).toLowerCase()}catch(e){}
+  return e0;
+}
+const mascara=e=>{const [a,b]=e.split('@');return a.slice(0,2)+'•••@'+b};
 function fecharAuth(){document.getElementById('authRoot').innerHTML=''}
 async function sair(){
   lsSet('cf_haspin','');try{sessionStorage.removeItem('cf_unl')}catch(e){}
@@ -1382,6 +1405,7 @@ async function entrar(u){
   ACESSO=null; S_email='';
   if(!u){S.ready=true;fecharLock();render();mostrarAuth('login');return}
   S_email=(u.email||'').toLowerCase(); FAM='';
+  if(ehUsuario(S_email)) fs.doc('logins/'+mostrarId(S_email)).get().then(d=>{if(!d.exists)fs.doc('logins/'+mostrarId(S_email)).set({email:S_email,criado:Date.now()}).catch(()=>{})}).catch(()=>{});
   // famílias em que esta pessoa está (a própria ou para onde foi convidada)
   let lista=[];
   try{const qs=await fs.collection('familias').where('emails','array-contains',S_email).get();lista=qs.docs.map(d=>({id:d.id,...d.data()}))}catch(e){}
