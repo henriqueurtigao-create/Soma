@@ -699,10 +699,10 @@ function vAjustes(){
   const membros=ACESSO?.emails||[], sv=ACESSO?.somenteVer||[];
   h+=`<section class="card"><h2>Quem acompanha <span class="aux">${membros.length} pessoa${membros.length!==1?'s':''}</span></h2><div class="pessoas">${membros.map(em=>{
       const p=S.pessoas.find(x=>(x.email||'').toLowerCase()===em)||{}, ve=sv.includes(em), eu=em===S_email, adm=!!p.id&&p.id===ACESSO.dono;
-      return `<div><span class="av" style="--c:${p.cor||CORES_P[0]}">${esc((nomeP(p)||em)[0].toUpperCase())}</span>
-      <span style="min-width:0"><b>${esc(nomeP(p)||em.split('@')[0])}${eu?' (você)':''}</b><small>${esc(em)} · ${adm?'administrador':ve?'só acompanha':p.id?'lança e acompanha':'ainda não entrou'}</small></span>
+      return `<div><span class="av" style="--c:${p.cor||CORES_P[0]}">${esc((nomeP(p)||mostrarId(em))[0].toUpperCase())}</span>
+      <span style="min-width:0"><b>${esc(nomeP(p)||mostrarId(em).split('@')[0])}${eu?' (você)':''}</b><small>${esc(mostrarId(em))} · ${adm?'administrador':ve?'só acompanha':p.id?'lança e acompanha':'ainda não entrou'}</small></span>
       ${S.isOwner&&!eu?`<span class="btnrow" style="justify-content:flex-end"><select id="papel_${encodeURIComponent(em)}" aria-label="Permissão"><option value="lanca" ${!ve?'selected':''}>Lança</option><option value="ve" ${ve?'selected':''}>Só vê</option></select><button class="btn small danger" data-act="remover" data-em="${esc(em)}">Remover</button></span>`:''}</div>`}).join('')}</div>
-    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="email" id="novo_email" placeholder="e-mail da pessoa" autocomplete="off"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Depois de liberar, mande o link do app. A pessoa toca em "Criar conta" com esse e-mail e escolhe a própria senha.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
+    ${S.isOwner?`<div class="stack" style="margin-top:12px"><label class="field"><span>Liberar acesso para</span><input type="text" id="novo_email" placeholder="usuário (ex.: ana)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label><button class="btn primary" data-act="liberar">Liberar acesso</button><p class="hint" style="margin:0">Depois de liberar, mande o link do app. A pessoa toca em "Criar conta" com esse usuário e escolhe a própria senha.</p></div>`:'<p class="hint">Só o administrador libera novos acessos.</p>'}</section>`;
 
   h+=`<section class="card"><h2>Cores do app <span class="aux">vale só para você</span></h2><div class="pals">${PALS.map(([k,n,c1,c2])=>`<button class="pal ${pal===k?'on':''}" data-act="setPal" data-pal="${k}"><span class="pal-sw" style="background:linear-gradient(135deg,${c1} 50%,${c2} 50%)"></span>${n}</button>`).join('')}</div></section>`;
 
@@ -711,7 +711,7 @@ function vAjustes(){
     <p class="muted" style="margin:0 0 12px">${temPin?'O app pede o PIN ao abrir e depois de 5 minutos fora.':'Trave o app com 4 números, útil no celular que as crianças pegam.'} O PIN é uma trava de tela: os dados continuam protegidos pela sua conta.</p>
     <div class="btnrow"><button class="btn" data-act="pin">${temPin?'Trocar PIN':'Criar PIN'}</button>${temPin?'<button class="btn danger" data-act="pinOff">Desativar PIN</button>':''}</div></section>`;
 
-  if(S.uid) h+=`<section class="card"><h2>Sua conta</h2><p class="muted" style="margin:0 0 12px">${esc(S_email)}${S.isOwner?' · administrador':''}</p><div class="btnrow"><button class="btn" data-act="trocarSenha">Trocar senha</button><button class="btn danger" data-act="sair">Sair</button></div></section>`;
+  if(S.uid) h+=`<section class="card"><h2>Sua conta</h2><p class="muted" style="margin:0 0 12px">${ehUsuario(S_email)?'Usuário: ':''}${esc(mostrarId(S_email))}${S.isOwner?' · administrador':''}</p><div class="btnrow"><button class="btn" data-act="trocarSenha">Trocar senha</button><button class="btn danger" data-act="sair">Sair</button></div></section>`;
 
   const tt=Object.entries(S.tetos||{}).filter(([c,v])=>v>0&&catById(c));
   h+=`<section class="card"><h2>Teto mensal por categoria</h2>${tt.length?`<div class="rows" style="margin-bottom:12px">${tt.map(([c,v])=>`<div class="row"><span class="n">${esc(catById(c).nome)}</span><span class="v">${brl0(v)}</span></div>`).join('')}</div>`:'<p class="empty" style="margin-top:0">Nenhum teto definido. Com um teto, o app avisa quando o gasto do mês chegar a 90%.</p>'}
@@ -918,10 +918,10 @@ async function mudarPapel(emc,papel){
   try{await db.doc('config/acesso').update({somenteVer:[...sv]});toast(papel==='ve'?'Agora só acompanha':'Agora pode lançar')}catch(e){erroEscrita(e)}
 }
 async function liberarAcesso(){
-  const em=(document.getElementById('novo_email')?.value||'').trim().toLowerCase();
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){toast('Digite um e-mail válido.');return}
-  if((ACESSO.emails||[]).includes(em)){toast('Esse e-mail já tem acesso.');return}
-  try{await db.doc('config/acesso').update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+em)}catch(e){erroEscrita(e)}
+  const bruto=(document.getElementById('novo_email')?.value||'').trim(), em=paraEmail(bruto);
+  if(!em||(ehUsuario(em)?mostrarId(em).length<3:!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))){toast('Digite um usuário com pelo menos 3 letras.');return}
+  if((ACESSO.emails||[]).includes(em)){toast('Esse usuário já tem acesso.');return}
+  try{await db.doc('config/acesso').update({emails:[...(ACESSO.emails||[]),em]});toast('Acesso liberado para '+mostrarId(em))}catch(e){erroEscrita(e)}
 }
 async function removerAcesso(b){
   const em=b.dataset.em;
@@ -1067,7 +1067,7 @@ $view.addEventListener('click',e=>{
   if(a==='liberar') liberarAcesso();
   if(a==='remover') removerAcesso(b);
   if(a==='sair') sair();
-  if(a==='trocarSenha') auth.sendPasswordResetEmail(S_email).then(()=>toast('Enviamos um link para '+S_email)).catch(()=>toast('Não foi possível enviar agora.'));
+  if(a==='trocarSenha') formSenha();
   if(a==='maisAlertas'){S.verAlertas=!S.verAlertas;render()}
   if(a==='tab'){S.tab=b.dataset.tab;lsSet('cf_tab',S.tab);render();scrollTo(0,0)}
 });
@@ -1102,7 +1102,7 @@ function gravar(p){return new Promise((res,rej)=>{let ok=false;p.then(()=>{if(!o
 function refDoc(r){return {id:r.id,path:r.path,get:()=>r.get(),onSnapshot:(...x)=>r.onSnapshot(...x),set:d=>gravar(r.set(d)),update:d=>gravar(r.update(d)),delete:()=>gravar(r.delete()),collection:p=>refCol(r.collection(p))}}
 function refCol(c){return {onSnapshot:(...x)=>c.onSnapshot(...x),get:()=>c.get(),doc:id=>refDoc(id?c.doc(id):c.doc()),add:d=>{const r=c.doc();return gravar(r.set(d)).then(()=>refDoc(r))}}}
 
-const AUTH_ERR={'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-login-credentials':'E-mail ou senha incorretos.','auth/email-already-in-use':'Esse e-mail já tem conta. Use "Entrar".','auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.','auth/invalid-email':'E-mail inválido.','auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.','auth/network-request-failed':'Sem internet. Tente de novo.','auth/missing-password':'Digite a senha.'};
+const AUTH_ERR={'auth/invalid-credential':'Usuário ou senha incorretos.','auth/wrong-password':'Usuário ou senha incorretos.','auth/user-not-found':'Usuário ou senha incorretos.','auth/invalid-login-credentials':'Usuário ou senha incorretos.','auth/email-already-in-use':'Esse usuário já tem conta. Use "Entrar".','auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.','auth/invalid-email':'Usuário inválido. Use só letras, números e ponto.','auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.','auth/network-request-failed':'Sem internet. Tente de novo.','auth/missing-password':'Digite a senha.'};
 const msgAuth=e=>AUTH_ERR[e?.code]||'Não foi possível concluir. Tente de novo.';
 
 function mostrarAuth(modo,info){
@@ -1110,14 +1110,14 @@ function mostrarAuth(modo,info){
   const corpo={
     config:`<h3>Falta configurar</h3><p>Cole a configuração do Firebase no arquivo index.html, como explica o SETUP.md.</p>`,
     login:`<h3>Entrar</h3>
-      <label class="field"><span>E-mail</span><input type="email" id="au_email" autocomplete="username" inputmode="email"></label>
+      <label class="field"><span>Usuário</span><input type="text" id="au_email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex.: luiz"></label>
       <label class="field"><span>Senha</span><input type="password" id="au_senha" autocomplete="current-password"></label>
       <p id="au_msg" role="alert"></p>
       <button class="btn primary block" data-au="entrar">Entrar</button>
       <button class="lnk" data-au="esqueci">Esqueci minha senha</button>
       <button class="lnk" data-au="ircriar">Primeiro acesso? Criar conta</button>`,
-    criar:`<h3>Criar conta</h3><p>Use o e-mail que o administrador liberou.</p>
-      <label class="field"><span>E-mail</span><input type="email" id="au_email" autocomplete="username" inputmode="email"></label>
+    criar:`<h3>Criar conta</h3><p>Use o usuário que o administrador liberou para você.</p>
+      <label class="field"><span>Usuário</span><input type="text" id="au_email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ex.: luiz"></label>
       <label class="field"><span>Senha (mínimo 6 caracteres)</span><input type="password" id="au_senha" autocomplete="new-password"></label>
       <label class="field"><span>Repita a senha</span><input type="password" id="au_senha2" autocomplete="new-password"></label>
       <p id="au_msg" role="alert"></p>
@@ -1128,7 +1128,7 @@ function mostrarAuth(modo,info){
       <button class="btn primary block" data-au="confirmei">Já confirmei</button>
       <button class="btn block" data-au="reenviar">Reenviar e-mail</button>
       <button class="lnk" data-au="sair">Sair</button>`,
-    negado:`<h3>Acesso ainda não liberado</h3><p>O e-mail <b>${em}</b> não está na lista da família. Peça ao administrador para liberar em Ajustes › Quem acompanha e toque em "Tentar de novo".</p>
+    negado:`<h3>Acesso ainda não liberado</h3><p>O usuário <b>${esc(mostrarId(auth?.currentUser?.email))}</b> não está na lista. Peça ao administrador para liberar em Ajustes › Quem acompanha e toque em "Tentar de novo".</p>
       <p id="au_msg" role="alert"></p>
       <button class="btn primary block" data-au="tentar">Tentar de novo</button>
       <button class="lnk" data-au="sair">Sair</button>`
@@ -1146,14 +1146,37 @@ function mostrarAuth(modo,info){
       if(k==='irlogin') mostrarAuth('login');
       if(k==='sair') sair();
       if(k==='tentar') entrar(auth.currentUser);
-      if(k==='entrar'){b.disabled=true;await auth.signInWithEmailAndPassword(v('au_email'),f.querySelector('#au_senha').value)}
-      if(k==='esqueci'){if(!v('au_email')){msg('Digite seu e-mail acima e toque de novo.');return}await auth.sendPasswordResetEmail(v('au_email'));toast('Enviamos um link para trocar a senha.')}
+      if(k==='entrar'){if(!v('au_email')){msg('Digite seu usuário.');return}b.disabled=true;await auth.signInWithEmailAndPassword(paraEmail(v('au_email')),f.querySelector('#au_senha').value)}
+      if(k==='esqueci'){const e1=paraEmail(v('au_email'));if(!e1){msg('Digite seu usuário acima e toque de novo.');return}if(ehUsuario(e1)){msg('Peça ao administrador para zerar sua senha. Depois é só criar a conta de novo com o mesmo usuário.');return}await auth.sendPasswordResetEmail(e1);toast('Enviamos um link para trocar a senha.')}
       if(k==='criar'){const s1=f.querySelector('#au_senha').value;if(s1!==f.querySelector('#au_senha2').value){msg('As duas senhas não são iguais.');return}
-        b.disabled=true;const c=await auth.createUserWithEmailAndPassword(v('au_email'),s1);await c.user.sendEmailVerification();mostrarAuth('verificar')}
+        const e1=paraEmail(v('au_email'));if(!e1){msg('Digite o usuário.');return}b.disabled=true;await auth.createUserWithEmailAndPassword(e1,s1)}
       if(k==='reenviar'){await auth.currentUser.sendEmailVerification();toast('E-mail reenviado.')}
       if(k==='confirmei'){await auth.currentUser.reload();if(!auth.currentUser.emailVerified){msg('Ainda não aparece como confirmado. Toque no link do e-mail e tente de novo.');return}
         await auth.currentUser.getIdToken(true);entrar(auth.currentUser)}
     }catch(err){b.disabled=false;msg(msgAuth(err))}
+  });
+}
+/* Usuário sem e-mail: vira um e-mail interno do projeto (ninguém recebe nada nele) */
+const DOM_USR='@soma-90ee5.firebaseapp.com';
+function paraEmail(x){x=String(x||'').trim().toLowerCase();if(!x)return '';if(x.includes('@'))return x;
+  x=x.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'.').replace(/[^a-z0-9._-]/g,'');return x?x+DOM_USR:''}
+const ehUsuario=em=>String(em||'').toLowerCase().endsWith(DOM_USR);
+const mostrarId=em=>ehUsuario(em)?String(em).slice(0,-DOM_USR.length):String(em||'');
+function formSenha(){
+  abrir(`<h3>Trocar senha<button data-close aria-label="Fechar">×</button></h3>
+    <label class="field"><span>Senha atual</span><input type="password" id="ps_a" autocomplete="current-password"></label>
+    <label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input type="password" id="ps_n" autocomplete="new-password"></label>
+    <label class="field"><span>Repita a nova senha</span><input type="password" id="ps_n2" autocomplete="new-password"></label>
+    <p class="hint" id="ps_msg" role="alert"></p>
+    <button class="btn primary block" id="ps_ok">Salvar nova senha</button>`,el=>{
+    const g=id=>el.querySelector('#'+id).value, m=t=>{const x=el.querySelector('#ps_msg');x.textContent=t;x.style.color='var(--bad)'};
+    el.querySelector('#ps_ok').onclick=async e=>{
+      if(g('ps_n')!==g('ps_n2')){m('As duas senhas novas não são iguais.');return}
+      e.target.disabled=true;
+      try{const u=auth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,g('ps_a')));
+        await u.updatePassword(g('ps_n'));fechar();toast('Senha trocada')}
+      catch(err){e.target.disabled=false;m(msgAuth(err))}
+    };
   });
 }
 function fecharAuth(){document.getElementById('authRoot').innerHTML=''}
@@ -1167,7 +1190,6 @@ async function entrar(u){
   Object.assign(S,{lanc:[],contas:[],itens:[],pessoas:[],tetos:{},prefs:null,loaded:{},slow:false,err:null,uid:null,isOwner:false,canWrite:true});
   ACESSO=null; S_email='';
   if(!u){S.ready=true;fecharLock();render();mostrarAuth('login');return}
-  if(!u.emailVerified){mostrarAuth('verificar');return}
   S_email=(u.email||'').toLowerCase();
   let ac;
   try{ac=await fs.doc('config/acesso').get()}catch(e){mostrarAuth('negado');return}
@@ -1175,7 +1197,7 @@ async function entrar(u){
     try{await gravar(fs.doc('config/acesso').set({dono:u.uid,emails:[S_email],somenteVer:[],criado:Date.now()}))}catch(e){mostrarAuth('negado');return}
     toast('Você é o administrador do app.');
   } else if(!(ac.data().emails||[]).includes(S_email)){mostrarAuth('negado');return}
-  S.uid=u.uid; S.names[S.uid]=S_email.split('@')[0]; S.ready=true;
+  S.uid=u.uid; S.names[S.uid]=mostrarId(S_email).split('@')[0]; S.ready=true;
   fecharAuth();
   subs.push(fs.doc('config/acesso').onSnapshot(sn=>{
     ACESSO=sn.data()||{}; S.isOwner=ACESSO.dono===S.uid; S.canWrite=!(ACESSO.somenteVer||[]).includes(S_email);
