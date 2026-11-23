@@ -753,7 +753,7 @@ function vAjustes(){
     <p class="muted" style="margin:0 0 12px">${temPin?'O app pede o PIN ao abrir e depois de 5 minutos fora.':'Trave o app com 4 números, útil no celular que as crianças pegam.'} O PIN é uma trava de tela: os dados continuam protegidos pela sua conta.</p>
     <div class="btnrow"><button class="btn" data-act="pin">${temPin?'Trocar PIN':'Criar PIN'}</button>${temPin?'<button class="btn danger" data-act="pinOff">Desativar PIN</button>':''}</div></section>`;
 
-  if(S.uid) h+=`<section class="card"><h2>Sua conta</h2><p class="muted" style="margin:0 0 12px">${ehUsuario(S_email)?'Usuário: ':''}${esc(mostrarId(S_email))}${S.isOwner?' · administrador':''}</p><div class="btnrow"><button class="btn" data-act="trocarSenha">Trocar senha</button><button class="btn danger" data-act="sair">Sair</button></div></section>`;
+  if(S.uid) h+=`<section class="card"><h2>Sua conta</h2><p class="muted" style="margin:0 0 12px">${ehUsuario(S_email)?'Usuário: ':''}${esc(mostrarId(S_email))}${S.isOwner?' · administrador':''}</p>${ehUsuario(S_email)?`<div class="alert warn" style="margin-bottom:12px;grid-template-columns:1fr"><span class="at"><b>Sem e-mail de recuperação</b><small>Se esquecer a senha, não dá para recuperar. Cadastre um e-mail.</small></span></div><button class="btn primary block" data-act="recup" style="margin-bottom:10px">Adicionar e-mail de recuperação</button>`:''}<div class="btnrow"><button class="btn" data-act="trocarSenha">Trocar senha</button><button class="btn danger" data-act="sair">Sair</button></div></section>`;
 
   const tt=Object.entries(S.tetos||{}).filter(([c,v])=>v>0&&catById(c));
   h+=`<section class="card"><h2>Teto mensal por categoria</h2>${tt.length?`<div class="rows" style="margin-bottom:12px">${tt.map(([c,v])=>`<div class="row"><span class="n">${esc(catById(c).nome)}</span><span class="v">${brl0(v)}</span></div>`).join('')}</div>`:'<p class="empty" style="margin-top:0">Nenhum teto definido. Com um teto, o app avisa quando o gasto do mês chegar a 90%.</p>'}
@@ -1243,6 +1243,7 @@ $view.addEventListener('click',e=>{
   if(a==='remover') removerAcesso(b);
   if(a==='sair') sair();
   if(a==='trocarSenha') formSenha();
+  if(a==='recup') formRecup();
   if(a==='maisAlertas'){S.verAlertas=!S.verAlertas;render()}
   if(a==='visao'){S.visao=b.dataset.v;render()}
   if(a==='trocaFam'){lsSet('cf_fam',id);entrar(auth.currentUser)}
@@ -1363,6 +1364,33 @@ function paraEmail(x){x=String(x||'').trim().toLowerCase();if(!x)return '';if(x.
   x=x.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'.').replace(/[^a-z0-9._-]/g,'');return x?x+DOM_USR:''}
 const ehUsuario=em=>String(em||'').toLowerCase().endsWith(DOM_USR);
 const mostrarId=em=>ehUsuario(em)?String(em).slice(0,-DOM_USR.length):String(em||'');
+function formRecup(){
+  const usr=mostrarId(S_email);
+  abrir(`<h3>E-mail de recuperação<button data-close aria-label="Fechar">×</button></h3>
+    <p class="muted" style="margin:0">Você continua entrando com o usuário <b>${esc(usr)}</b>. O e-mail só é usado se esquecer a senha.</p>
+    <label class="field"><span>Seu e-mail</span><input type="email" id="rc_em" autocomplete="email" inputmode="email" placeholder="seu@email.com"></label>
+    <label class="field"><span>Senha atual (para confirmar que é você)</span><input type="password" id="rc_s" autocomplete="current-password"></label>
+    <p class="hint" id="rc_msg" role="alert"></p>
+    <button class="btn primary block" id="rc_ok">Enviar confirmação</button>`,el=>{
+    const q=x=>el.querySelector(x), m=(t,ok)=>{const x=q('#rc_msg');x.textContent=t;x.style.color=ok?'var(--good)':'var(--bad)'};
+    q('#rc_ok').onclick=async e=>{
+      const em=q('#rc_em').value.trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){m('Confira o e-mail.');return}
+      e.target.disabled=true;
+      try{
+        const u=auth.currentUser;
+        await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,q('#rc_s').value));
+        // mantém o acesso às finanças com o novo e-mail
+        for(const f of (S.familias||[]).filter(f=>f.dono===u.uid)){const r=await fs.doc('familias/'+f.id).get();const ems=r.data().emails||[];if(!ems.includes(em))await fs.doc('familias/'+f.id).update({emails:[...ems,em]})}
+        const lg=fs.doc('logins/'+usr); if(!(await lg.get()).exists) await lg.set({email:S_email,criado:Date.now()});
+        await lg.update({email:em,anterior:S_email});
+        await u.verifyBeforeUpdateEmail(em);
+        m(`Enviamos um link para ${mascara(em)}. Abra o e-mail (veja o spam), toque no link e depois entre de novo com o usuário ${usr} e sua senha.`,true);
+        e.target.textContent='Enviado';
+      }catch(err){e.target.disabled=false;m(err?.code==='auth/email-already-in-use'?'Esse e-mail já está em outra conta do Soma.':msgAuth(err))}
+    };
+  });
+}
 function formSenha(){
   abrir(`<h3>Trocar senha<button data-close aria-label="Fechar">×</button></h3>
     <label class="field"><span>Senha atual</span><input type="password" id="ps_a" autocomplete="current-password"></label>
@@ -1436,7 +1464,7 @@ render();
 if(!configurado()||!window.firebase){S.ready=true;mostrarAuth('config')}
 else{
   firebase.initializeApp(FIREBASE_CONFIG);
-  auth=firebase.auth(); fs=firebase.firestore();
+  auth=firebase.auth(); try{auth.languageCode='pt-BR'}catch(e){} fs=firebase.firestore();
   try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
   db={doc:p=>refDoc(fs.doc(px(p))),collection:p=>refCol(fs.collection(px(p)))};
   auth.onAuthStateChanged(u=>entrar(u));
